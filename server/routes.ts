@@ -1,9 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
 import { dateOfBirthSchema } from "@shared/schema";
-import { spawn } from "child_process";
-import path from "path";
+import { getNumerologyAnalysis } from "./numerology.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Calculate numerology analysis
@@ -11,46 +9,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { day, month, year } = dateOfBirthSchema.parse(req.body);
 
-      // Run Python script for calculations
-      const pythonScript = path.join(process.cwd(), "server", "numerology.py");
-      const pythonProcess = spawn("python3", [pythonScript, day.toString(), month.toString(), year.toString()]);
-
-      let output = "";
-      let errorOutput = "";
-
-      pythonProcess.stdout.on("data", (data) => {
-        output += data.toString();
-      });
-
-      pythonProcess.stderr.on("data", (data) => {
-        errorOutput += data.toString();
-      });
-
-      pythonProcess.on("close", async (code) => {
-        if (code !== 0) {
-          console.error("Python script error:", errorOutput);
-          return res.status(500).json({ error: "Failed to calculate numerology" });
-        }
-
-        try {
-          const analysis = JSON.parse(output);
-          
-          // Store the analysis
-          const savedAnalysis = await storage.createNumerologyAnalysis({
-            inputDate: `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`,
-            day,
-            month,
-            year,
-            analysis,
-            createdAt: new Date().toISOString(),
-          });
-
-          res.json(analysis);
-        } catch (parseError) {
-          console.error("Failed to parse Python output:", parseError);
-          res.status(500).json({ error: "Failed to parse analysis results" });
-        }
-      });
+      // Use JavaScript implementation for calculations
+      const analysis = getNumerologyAnalysis(day, month, year);
+      res.json(analysis);
 
     } catch (error) {
       console.error("Numerology calculation error:", error);
