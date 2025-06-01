@@ -39,60 +39,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Focus on real-life applications and practical guidance that people can use to improve their lives. Be specific about timing, challenges, opportunities, and remedies when relevant.`;
 
-      const userPrompt = `Please provide a comprehensive life analysis based on this numerological profile:
+      // Enhanced analytics prompt based on deeper numerological calculations
+      const calculateAdditionalAnalytics = () => {
+        const presentCount = analysis.lusho_grid.present_numbers.length;
+        const missingCount = analysis.lusho_grid.missing_numbers.length;
+        const yogaCount = analysis.yogas_found.length;
+        const strongNumbers = analysis.lusho_grid.present_numbers.filter(n => 
+          analysis.lusho_grid.number_counts[n] > 1
+        );
+        const dominantPlanet = analysis.psychic_number.planet;
+        const lifePath = analysis.destiny_number.planet;
+        
+        return {
+          numericalBalance: presentCount >= 7 ? "Highly Balanced" : presentCount >= 5 ? "Moderately Balanced" : "Needs Balance",
+          karmaIntensity: yogaCount >= 3 ? "High Karmic Activity" : yogaCount >= 1 ? "Moderate Karmic Influence" : "Simple Life Path",
+          personalityStrength: strongNumbers.length >= 2 ? "Strong Character" : strongNumbers.length === 1 ? "Focused Nature" : "Diverse Interests",
+          planetaryInfluence: `${dominantPlanet} dominance with ${lifePath} life direction`,
+          criticalNumbers: analysis.lusho_grid.missing_numbers.slice(0, 3),
+          powerNumbers: strongNumbers
+        };
+      };
 
-**CORE NUMBERS:**
-• Psychic Number: ${analysis.psychic_number.number} (${analysis.psychic_number.planet}) - Your personality and how others see you
-• Destiny Number: ${analysis.destiny_number.number} (${analysis.destiny_number.planet}) - Your life path and purpose
+      const analytics = calculateAdditionalAnalytics();
 
-**PRESENT NUMBERS IN DATE:** ${analysis.lusho_grid.present_numbers.join(', ')}
-**MISSING NUMBERS:** ${analysis.lusho_grid.missing_numbers.join(', ')}
+      const userPrompt = `I need a comprehensive life reading for someone with this unique numerological blueprint:
 
-**RELATIONSHIPS:**
-• Friendly Numbers: ${analysis.friendly_unfriendly.friendly.join(', ')}
-• Unfriendly Numbers: ${analysis.friendly_unfriendly.unfriendly.join(', ')}
+**🔢 CORE IDENTITY:**
+• **Psychic Number:** ${analysis.psychic_number.number} (${analysis.psychic_number.planet}) - Their natural personality and public image
+• **Destiny Number:** ${analysis.destiny_number.number} (${analysis.destiny_number.planet}) - Their soul's mission and life purpose
+• **Date Analysis:** ${analysis.input_dob}
 
-**SPECIAL YOGAS:** ${analysis.yogas_found.length > 0 ? analysis.yogas_found.map((y: any) => y.name).join(', ') : 'None'}
+**📊 NUMERICAL PRESENCE & ENERGY:**
+• **Present Numbers:** ${analysis.lusho_grid.present_numbers.join(', ')} (${analytics.numericalBalance})
+• **Missing/Weak Numbers:** ${analysis.lusho_grid.missing_numbers.join(', ')} - Areas needing development
+• **Power Numbers:** ${analytics.powerNumbers.join(', ') || 'None'} - Doubled/tripled strengths
+• **Number Counts:** ${Object.entries(analysis.lusho_grid.number_counts).filter(([,count]) => count > 0).map(([num, count]) => `${num}(${count}x)`).join(', ')}
 
-Provide detailed insights covering:
+**🌟 KARMIC PATTERNS & YOGAS:**
+• **Yoga Status:** ${analytics.karmaIntensity}
+• **Active Yogas:** ${analysis.yogas_found.length > 0 ? analysis.yogas_found.map((y: any) => y.name).join(' | ') : 'None - Simple karmic path'}
 
-1. **PERSONALITY & MINDSET**
-   - Core personality traits and natural tendencies
-   - Mental strengths and thinking patterns
-   - How others perceive you vs your inner self
-   - Mindset shifts needed for growth
+**🔗 RELATIONSHIP DYNAMICS:**
+• **Harmonious Numbers:** ${analysis.friendly_unfriendly.friendly.join(', ')} - Natural allies and supportive energies  
+• **Challenging Numbers:** ${analysis.friendly_unfriendly.unfriendly.join(', ')} - Numbers requiring caution
 
-2. **HEALTH & VITALITY**
-   - Physical health tendencies and vulnerabilities
-   - Mental/emotional health patterns
-   - Recommended lifestyle adjustments
-   - Preventive health measures
+**🎯 PLANETARY DOMINANCE:** ${analytics.planetaryInfluence}
 
-3. **LOVE & RELATIONSHIPS**
-   - Romantic compatibility and relationship patterns
-   - Family dynamics and friendships
-   - Communication style in relationships
-   - Guidance for finding and maintaining love
+---
 
-4. **WEALTH & CAREER**
-   - Natural career aptitudes and business sense
-   - Money-making abilities and financial patterns
-   - Best timing for major financial decisions
-   - Investment and savings recommendations
+**Please provide a detailed life blueprint covering:**
 
-5. **LIFE CHALLENGES & SOLUTIONS**
-   - Major life struggles you're likely to face
-   - Karmic lessons and spiritual tests
-   - Practical remedies and solutions
-   - How to transform weaknesses into strengths
+## **🧠 PERSONALITY & PSYCHOLOGICAL PROFILE**
+- Deep personality analysis based on ${analysis.psychic_number.number} (${analysis.psychic_number.planet}) dominance
+- Mental processing style and decision-making patterns
+- Subconscious drives and motivations
+- Public persona vs private self
+- Cognitive strengths and blind spots
+- Emotional patterns and triggers
 
-6. **SPIRITUAL GROWTH & PURPOSE**
-   - Life mission and dharma
-   - Spiritual practices that suit your nature
-   - Service opportunities and giving patterns
-   - Path to self-realization
+## **💖 LOVE, RELATIONSHIPS & FAMILY**
+- Romantic compatibility matrix and ideal partner qualities
+- Relationship challenges and growth opportunities  
+- Family dynamics and generational patterns
+- Friendship styles and social connections
+- Communication patterns in intimate relationships
+- Best timing for marriage and major relationship decisions
 
-Please write in a warm, empathetic tone as if speaking directly to the person. Use specific examples and practical advice they can implement immediately.`;
+## **💰 WEALTH, CAREER & LIFE PURPOSE**
+- Natural talents and career aptitudes based on number combinations
+- Money magnetism and wealth accumulation patterns
+- Business vs employment suitability
+- Investment timing and financial decision-making
+- Professional growth phases and peak earning periods
+- Life mission and dharmic career path
+
+## **🏥 HEALTH & VITALITY BLUEPRINT**
+- Physical constitution and health vulnerabilities based on missing numbers
+- Mental health patterns and emotional wellness
+- Body system strengths and weaknesses
+- Preventive health strategies
+- Healing modalities that resonate with their numbers
+- Lifestyle modifications for optimal vitality
+
+## **⚡ LIFE CHALLENGES & KARMIC LESSONS**
+- Major life tests and growth periods
+- Karmic debts requiring resolution
+- Recurring life themes and patterns
+- How to transform challenges into strengths
+- Timing of difficult periods and breakthrough moments
+- Practical remedies and spiritual solutions
+
+## **🌟 SPIRITUAL GROWTH & HIGHER PURPOSE**
+- Soul evolution path and spiritual gifts
+- Meditation and spiritual practices suited to their nature
+- Service opportunities and giving patterns
+- Spiritual teacher/guide characteristics
+- Past life influences and karmic completion
+- Path to enlightenment and self-realization
+
+**Writing Style:** Speak directly to them with warmth and authority. Provide specific, actionable guidance they can implement immediately. Include timing insights, practical examples, and transformational advice that feels personally relevant.`;
 
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",

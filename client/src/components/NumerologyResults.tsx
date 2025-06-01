@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMutation } from "@tanstack/react-query";
 import { generateAIAnalysis } from "@/lib/numerology";
 import type { NumerologyAnalysis } from "@/lib/numerology";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import {
   User,
   Compass,
@@ -82,13 +83,13 @@ export default function NumerologyResults({ analysis, onReset }: NumerologyResul
     );
   };
 
-  const renderNumberBadges = (numbers: number[], variant: "success" | "destructive") => {
+  const renderNumberBadges = (numbers: number[], variant: "default" | "destructive") => {
     return numbers.map((number) => (
       <Badge
         key={number}
         variant={variant}
         className={`px-3 py-1 rounded-full text-sm font-medium ${
-          variant === "success"
+          variant === "default"
             ? "bg-green-100 text-green-800 hover:bg-green-200"
             : "bg-red-100 text-red-800 hover:bg-red-200"
         }`}
@@ -252,7 +253,7 @@ export default function NumerologyResults({ analysis, onReset }: NumerologyResul
                 Present Numbers
               </h4>
               <div className="flex flex-wrap gap-2">
-                {renderNumberBadges(analysis.lusho_grid.present_numbers, "success")}
+                {renderNumberBadges(analysis.lusho_grid.present_numbers, "default")}
               </div>
             </div>
             <div>
@@ -371,25 +372,51 @@ export default function NumerologyResults({ analysis, onReset }: NumerologyResul
           </h3>
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="prose prose-purple max-w-none">
-              {aiAnalysisResult ? (
-                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                  {aiAnalysisResult}
-                </div>
-              ) : (
-                <div className="text-gray-700 leading-relaxed">
-                  <p className="mb-4">
-                    Generate a comprehensive AI-powered analysis of your numerological profile
-                    including personality insights, life path guidance, and personalized
-                    recommendations.
+            {aiAnalysisResult ? (
+              <div className="max-w-none">
+                <MarkdownRenderer content={aiAnalysisResult} />
+              </div>
+            ) : (
+              <div className="text-gray-700 leading-relaxed">
+                <div className="text-center py-8">
+                  <Brain className="w-16 h-16 mx-auto mb-4 text-purple-400" />
+                  <h4 className="text-xl font-semibold text-gray-800 mb-3">
+                    Unlock Your Complete Life Analysis
+                  </h4>
+                  <p className="mb-4 text-gray-600 max-w-2xl mx-auto">
+                    Get a comprehensive AI-powered analysis covering your personality, relationships, 
+                    career potential, health patterns, wealth opportunities, and spiritual growth path. 
+                    Our expert system provides personalized insights you can use immediately.
                   </p>
-                  <p className="text-sm text-gray-600">
-                    Our AI will analyze your unique combination of numbers to provide deeper
-                    insights into your numerological makeup.
-                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 max-w-3xl mx-auto text-sm">
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <Heart className="w-5 h-5 text-purple-600 mx-auto mb-1" />
+                      <div className="font-medium text-purple-800">Relationships</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <User className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                      <div className="font-medium text-blue-800">Personality</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <Star className="w-5 h-5 text-green-600 mx-auto mb-1" />
+                      <div className="font-medium text-green-800">Career & Wealth</div>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 mx-auto mb-1" />
+                      <div className="font-medium text-amber-800">Challenges</div>
+                    </div>
+                    <div className="bg-indigo-50 rounded-lg p-3">
+                      <Compass className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
+                      <div className="font-medium text-indigo-800">Life Purpose</div>
+                    </div>
+                    <div className="bg-rose-50 rounded-lg p-3">
+                      <Globe className="w-5 h-5 text-rose-600 mx-auto mb-1" />
+                      <div className="font-medium text-rose-800">Health & Vitality</div>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {!aiAnalysisResult && (
               <Button
