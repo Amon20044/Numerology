@@ -1,0 +1,213 @@
+import sys
+import json
+import datetime
+
+def reduce_to_single_digit(number):
+    """Reduces a number by summing its digits until a single digit (1-9) is obtained."""
+    if number in [11, 22, 33]:
+        return number  # Don't reduce master numbers here, let calling function decide
+
+    while number > 9:
+        sum_digits = 0
+        for digit in str(number):
+            sum_digits += int(digit)
+        number = sum_digits
+        if number in [11, 22, 33]:
+            break
+    return number
+
+def calculate_psychic_number(day):
+    """Calculates the Psychic Number from the day of birth."""
+    psychic_num = day
+    while psychic_num > 9:
+        sum_digits = 0
+        for digit in str(psychic_num):
+            sum_digits += int(digit)
+        psychic_num = sum_digits
+    return psychic_num
+
+def calculate_destiny_number(day, month, year):
+    """Calculates the Destiny/Life Path Number from the full date of birth."""
+    dob_str = str(day) + str(month) + str(year)
+    total_sum = 0
+    for digit in dob_str:
+        total_sum += int(digit)
+
+    destiny_num = total_sum
+    while destiny_num > 9 and destiny_num not in [11, 22, 33]:
+        sum_digits = 0
+        for digit in str(destiny_num):
+            sum_digits += int(digit)
+        destiny_num = sum_digits
+        if destiny_num in [11, 22, 33]:
+            break
+    return destiny_num
+
+def get_planetary_association(number):
+    """Returns the ruling planet for a given number (1-9)."""
+    if number in [11, 22, 33]:
+        reduced_num = number
+        while reduced_num > 9:
+            sum_digits = 0
+            for digit in str(reduced_num):
+                sum_digits += int(digit)
+            reduced_num = sum_digits
+        number = reduced_num
+
+    planets = {
+        1: "Sun", 2: "Moon", 3: "Jupiter", 4: "Rahu", 5: "Mercury",
+        6: "Venus", 7: "Ketu", 8: "Saturn", 9: "Mars"
+    }
+    return planets.get(number, "Unknown")
+
+def construct_lusho_grid(day, month, year):
+    """Constructs the Lusho Grid, finds present/missing numbers, and counts."""
+    dob_str = str(day) + str(month) + str(year)
+    digits_in_dob = [int(d) for d in dob_str if d != '0']
+
+    standard_grid_map = {n: [] for n in range(1, 10)}
+    number_counts = {n: 0 for n in range(1, 10)}
+    present_numbers = set()
+
+    for digit in digits_in_dob:
+        if 1 <= digit <= 9:
+            standard_grid_map[digit].append(digit)
+            number_counts[digit] += 1
+            present_numbers.add(digit)
+
+    present_numbers_list = sorted(list(present_numbers))
+    missing_numbers_list = sorted([n for n in range(1, 10) if n not in present_numbers])
+
+    grid_population_output = {k: v for k, v in standard_grid_map.items()}
+
+    return {
+        "grid_population": grid_population_output,
+        "present_numbers": present_numbers_list,
+        "missing_numbers": missing_numbers_list,
+        "number_counts": number_counts
+    }
+
+def get_friendly_unfriendly(psychic_number):
+    """Returns friendly and unfriendly numbers based on the Psychic Number."""
+    relationships = {
+        1: {"friendly": [1, 2, 3, 4, 5, 7, 9], "unfriendly": [6, 8]},
+        2: {"friendly": [1, 3, 4, 7, 8, 9], "unfriendly": [2, 5, 6]},
+        3: {"friendly": [1, 2, 3, 5, 6, 8, 9], "unfriendly": [4, 7]},
+        4: {"friendly": [1, 2, 5, 6, 7, 9], "unfriendly": [3, 4, 8]},
+        5: {"friendly": [1, 3, 4, 5, 6, 7, 8, 9], "unfriendly": [2]},
+        6: {"friendly": [3, 4, 5, 8, 9], "unfriendly": [1, 2, 6, 7]},
+        7: {"friendly": [1, 2, 4, 5], "unfriendly": [3, 6, 7, 8, 9]},
+        8: {"friendly": [2, 3, 5, 6], "unfriendly": [1, 4, 7, 8, 9]},
+        9: {"friendly": [1, 2, 3, 4, 5, 6, 9], "unfriendly": [7, 8]}
+    }
+    rel = relationships.get(psychic_number, {"friendly": [], "unfriendly": []})
+    return {
+        "based_on_psychic": psychic_number,
+        "friendly": rel["friendly"],
+        "unfriendly": rel["unfriendly"]
+    }
+
+def calculate_simplified_mahadasha(destiny_number):
+    """Calculates the simplified numerological Mahadasha sequence."""
+    start_num = destiny_number
+    if start_num in [11, 22, 33]:
+        reduced_num = start_num
+        while reduced_num > 9:
+            sum_digits = 0
+            for digit in str(reduced_num):
+                sum_digits += int(digit)
+            reduced_num = sum_digits
+        start_num = reduced_num
+
+    sequence = []
+    current_num = start_num
+    for _ in range(9):  # Generate one full cycle
+        duration = current_num
+        planet = get_planetary_association(current_num)
+        sequence.append({"number": current_num, "planet": planet, "duration": duration})
+        current_num = current_num + 1
+        if current_num > 9:
+            current_num = 1
+    return sequence
+
+def identify_yogas(present_numbers_set):
+    """Identifies numerological Yogas based on combinations of present numbers."""
+    yogas_definitions = [
+        {"combo": {3, 1, 9}, "name": "Raj Yog (Fame/Success)", "description": "Indicates potential for Fame, Success, Wealth, Spiritual Path."},
+        {"combo": {3, 7, 4}, "name": "Kalsarp Yog (Numerology)", "description": "Indicates potential for high success, but possible cash flow problems."},
+        {"combo": {9, 7, 2}, "name": "Courage Yog", "description": "Indicates self-confidence, potential to be a 'real hero'."},
+        {"combo": {3, 6, 2}, "name": "Education Yoga", "description": "Indicates potential as a good teacher, high intelligence, possibly manipulative."},
+        {"combo": {1, 7, 8}, "name": "Spiritual Success Yog", "description": "Indicates potential for spiritual/socialist success, multiple income sources, possible legal issues, strong intuition."},
+        {"combo": {2, 8, 4}, "name": "Hard Work Success Yog", "description": "Indicates success through hard work, but potential proneness to accidents or chronic health issues."},
+        {"combo": {6, 7, 5}, "name": "Business Success Yog", "description": "Indicates potential for business success, creativity, skill, good money management, success in love/marriage."},
+        {"combo": {9, 5, 4}, "name": "Bandhan Yog", "description": "Indicates goal achievement, quick decisions, hard work, potential property disputes."},
+        {"combo": {3, 9, 8}, "name": "Trine Yoga (3,9,8)", "description": "Average education/family life, success after hard work."},
+        {"combo": {6, 9, 4}, "name": "Trine Yoga (6,9,4)", "description": "Potential for extra-marital affairs, strong will, materialism."},
+        {"combo": {1, 2, 4}, "name": "Trine Yoga (1,2,4)", "description": "Potential disturbances in education, life fluctuations."},
+        {"combo": {9, 1, 7}, "name": "L-Shape Combination (9,1,7)", "description": "Strong will, potentially aggressive nature."},
+        {"combo": {1, 3, 6}, "name": "L-Shape Combination (1,3,6)", "description": "Highly intellectual, knowledgeable, wise, potential as a good teacher."},
+        {"combo": {7, 5, 4}, "name": "L-Shape Kalsarp (7,5,4)", "description": "Hard work, potential poor communication skills."},
+        {"combo": {6, 7}, "name": "Two Number Combination (6,7)", "description": "Potential disinterest or less interest in luxury/love."},
+        {"combo": {9, 5}, "name": "Two Number Combination (9,5)", "description": "Action-oriented, motivated, tendency to act before thinking."}
+    ]
+
+    found_yogas = []
+    for yoga in yogas_definitions:
+        if yoga["combo"].issubset(present_numbers_set):
+            found_yogas.append({"name": yoga["name"], "description": yoga["description"]})
+
+    return found_yogas
+
+def get_numerology_analysis(day, month, year):
+    """Performs the full numerology analysis for a given DOB."""
+    if not (1 <= day <= 31 and 1 <= month <= 12 and year > 0):
+        raise ValueError("Invalid Date of Birth provided.")
+
+    analysis = {}
+    analysis["input_dob"] = f"{day:02d}/{month:02d}/{year}"
+
+    # Core Numbers
+    psychic_num = calculate_psychic_number(day)
+    destiny_num = calculate_destiny_number(day, month, year)
+    analysis["psychic_number"] = {
+        "number": psychic_num,
+        "planet": get_planetary_association(psychic_num)
+    }
+    analysis["destiny_number"] = {
+        "number": destiny_num,
+        "planet": get_planetary_association(destiny_num)
+    }
+
+    # Planetary Associations
+    analysis["planetary_associations"] = {n: get_planetary_association(n) for n in range(1, 10)}
+
+    # Lusho Grid
+    lusho_data = construct_lusho_grid(day, month, year)
+    analysis["lusho_grid"] = lusho_data
+
+    # Friendly/Unfriendly
+    analysis["friendly_unfriendly"] = get_friendly_unfriendly(psychic_num)
+
+    # Simplified Mahadasha
+    analysis["simplified_mahadasha_sequence"] = calculate_simplified_mahadasha(destiny_num)
+
+    # Yogas
+    present_numbers_set = set(lusho_data["present_numbers"])
+    analysis["yogas_found"] = identify_yogas(present_numbers_set)
+
+    return analysis
+
+if __name__ == "__main__":
+    try:
+        if len(sys.argv) != 4:
+            raise ValueError("Usage: python numerology.py <day> <month> <year>")
+        
+        day = int(sys.argv[1])
+        month = int(sys.argv[2])
+        year = int(sys.argv[3])
+        
+        result = get_numerology_analysis(day, month, year)
+        print(json.dumps(result))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}), file=sys.stderr)
+        sys.exit(1)
