@@ -28,59 +28,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Analysis data required" });
       }
 
-      const openRouterApiKey = process.env.OPENROUTER_API_KEY || "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";
+      const openRouterApiKey = process.env.OPEN_ROUTER_META_LLAMA_4;
 
       if (!openRouterApiKey) {
         return res.status(500).json({ error: "OpenRouter API key not configured" });
       }
 
-      // Prepare prompt for AI analysis
-      const prompt = `As a professional Vedic numerologist, provide a detailed analysis based on the following numerological profile:
+      // Create comprehensive numerology prompt covering all life aspects
+      const systemPrompt = `You are a master Vedic numerologist with 30+ years of experience helping people understand their life path through ancient Indian numerology. You provide deep, practical insights about personality, relationships, career, health, wealth, and spiritual growth. Your analyses are compassionate, accurate, and actionable - helping people understand their true nature and life purpose.
 
-Psychic Number: ${analysis.psychic_number.number} (${analysis.psychic_number.planet})
-Destiny Number: ${analysis.destiny_number.number} (${analysis.destiny_number.planet})
-Present Numbers: ${analysis.lusho_grid.present_numbers.join(', ')}
-Missing Numbers: ${analysis.lusho_grid.missing_numbers.join(', ')}
-Friendly Numbers: ${analysis.friendly_unfriendly.friendly.join(', ')}
-Unfriendly Numbers: ${analysis.friendly_unfriendly.unfriendly.join(', ')}
-Yogas Found: ${analysis.yogas_found.map((y: any) => y.name).join(', ')}
+Focus on real-life applications and practical guidance that people can use to improve their lives. Be specific about timing, challenges, opportunities, and remedies when relevant.`;
 
-Please provide:
-1. A comprehensive personality analysis
-2. Life path insights and recommendations
-3. Career and relationship guidance
-4. Spiritual and personal growth suggestions
-5. Specific advice for leveraging strengths and addressing challenges
+      const userPrompt = `Please provide a comprehensive life analysis based on this numerological profile:
 
-Keep the analysis professional, insightful, and actionable. Format in well-structured paragraphs.`;
+**CORE NUMBERS:**
+• Psychic Number: ${analysis.psychic_number.number} (${analysis.psychic_number.planet}) - Your personality and how others see you
+• Destiny Number: ${analysis.destiny_number.number} (${analysis.destiny_number.planet}) - Your life path and purpose
+
+**PRESENT NUMBERS IN DATE:** ${analysis.lusho_grid.present_numbers.join(', ')}
+**MISSING NUMBERS:** ${analysis.lusho_grid.missing_numbers.join(', ')}
+
+**RELATIONSHIPS:**
+• Friendly Numbers: ${analysis.friendly_unfriendly.friendly.join(', ')}
+• Unfriendly Numbers: ${analysis.friendly_unfriendly.unfriendly.join(', ')}
+
+**SPECIAL YOGAS:** ${analysis.yogas_found.length > 0 ? analysis.yogas_found.map((y: any) => y.name).join(', ') : 'None'}
+
+Provide detailed insights covering:
+
+1. **PERSONALITY & MINDSET**
+   - Core personality traits and natural tendencies
+   - Mental strengths and thinking patterns
+   - How others perceive you vs your inner self
+   - Mindset shifts needed for growth
+
+2. **HEALTH & VITALITY**
+   - Physical health tendencies and vulnerabilities
+   - Mental/emotional health patterns
+   - Recommended lifestyle adjustments
+   - Preventive health measures
+
+3. **LOVE & RELATIONSHIPS**
+   - Romantic compatibility and relationship patterns
+   - Family dynamics and friendships
+   - Communication style in relationships
+   - Guidance for finding and maintaining love
+
+4. **WEALTH & CAREER**
+   - Natural career aptitudes and business sense
+   - Money-making abilities and financial patterns
+   - Best timing for major financial decisions
+   - Investment and savings recommendations
+
+5. **LIFE CHALLENGES & SOLUTIONS**
+   - Major life struggles you're likely to face
+   - Karmic lessons and spiritual tests
+   - Practical remedies and solutions
+   - How to transform weaknesses into strengths
+
+6. **SPIRITUAL GROWTH & PURPOSE**
+   - Life mission and dharma
+   - Spiritual practices that suit your nature
+   - Service opportunities and giving patterns
+   - Path to self-realization
+
+Please write in a warm, empathetic tone as if speaking directly to the person. Use specific examples and practical advice they can implement immediately.`;
 
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${openRouterApiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:5000",
+          "HTTP-Referer": "https://vedic-numerology-calculator.replit.app",
           "X-Title": "Vedic Numerology Calculator"
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-3.1-405b-instruct",
+          model: "meta-llama/llama-4-maverick:free",
           messages: [
             {
               role: "system",
-              content: "You are an expert Vedic numerologist with deep knowledge of ancient Indian numerology traditions. Provide detailed, accurate, and insightful numerological analyses."
+              content: systemPrompt
             },
             {
               role: "user",
-              content: prompt
+              content: userPrompt
             }
           ],
-          max_tokens: 2000,
-          temperature: 0.7
+          max_tokens: 3000,
+          temperature: 0.7,
+          top_p: 0.9
         })
       });
 
       if (!response.ok) {
-        throw new Error(`OpenRouter API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error("OpenRouter API error:", response.status, errorText);
+        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
       }
 
       const aiResponse = await response.json();
@@ -94,7 +137,10 @@ Keep the analysis professional, insightful, and actionable. Format in well-struc
 
     } catch (error) {
       console.error("AI analysis error:", error);
-      res.status(500).json({ error: "Failed to generate AI analysis" });
+      res.status(500).json({ 
+        error: "Failed to generate AI analysis",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
