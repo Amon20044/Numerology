@@ -1,0 +1,269 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import datetime
+
+app = Flask(__name__)
+# Enable CORS for all routes with all origins allowed
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Planetary associations
+PLANETARY_ASSOCIATIONS = {
+    1: "Sun",
+    2: "Moon",
+    3: "Jupiter",
+    4: "Rahu",
+    5: "Mercury",
+    6: "Venus",
+    7: "Ketu",
+    8: "Saturn",
+    9: "Mars"
+}
+
+def reduce_to_single_digit(number):
+    """Reduce a number to a single digit (1-9) by summing its digits."""
+    if number <= 9:
+        return number
+    
+    # Sum the digits
+    digit_sum = sum(int(digit) for digit in str(number))
+    
+    # Recursively reduce until we get a single digit
+    return reduce_to_single_digit(digit_sum)
+
+def calculate_psychic_number(day):
+    """Calculate Psychic Number (Personality Number) from day of birth."""
+    return reduce_to_single_digit(day)
+
+def calculate_destiny_number(day, month, year):
+    """Calculate Destiny Number (Life Path Number) from full date of birth."""
+    # Sum all digits in the date
+    date_sum = sum(int(digit) for digit in str(day) + str(month) + str(year))
+    
+    # Reduce to a single digit
+    return reduce_to_single_digit(date_sum)
+
+def get_planetary_ruler(number):
+    """Get the planetary ruler for a given number."""
+    return PLANETARY_ASSOCIATIONS.get(number, "Unknown")
+
+def populate_lusho_grid(day, month, year):
+    """Populate the Lusho Grid (Vedic Square) based on date of birth."""
+    # Convert date components to strings and combine
+    date_str = f"{day}{month}{year}"
+    
+    # Initialize grid with empty lists for each position (1-9)
+    grid = {i: [] for i in range(1, 10)}
+    
+    # Count occurrences of each digit
+    digit_counts = {i: 0 for i in range(1, 10)}
+    
+    # Populate the grid based on digits in the date
+    for digit in date_str:
+        if digit != '0':  # Skip zeros
+            num = int(digit)
+            grid[num].append(num)
+            digit_counts[num] += 1
+    
+    # Determine present and missing numbers
+    present_numbers = [i for i in range(1, 10) if digit_counts[i] > 0]
+    missing_numbers = [i for i in range(1, 10) if digit_counts[i] == 0]
+    
+    return {
+        "grid_population": grid,
+        "present_numbers": present_numbers,
+        "missing_numbers": missing_numbers,
+        "number_counts": digit_counts
+    }
+
+def get_friendly_unfriendly_numbers(psychic_number):
+    """Determine friendly and unfriendly numbers based on Psychic Number."""
+    # Friendly and unfriendly relationships based on Vedic numerology
+    relationships = {
+        1: {"friendly": [1, 3, 5, 9], "unfriendly": [2, 4, 6, 7, 8]},
+        2: {"friendly": [2, 4, 6, 8], "unfriendly": [1, 3, 5, 7, 9]},
+        3: {"friendly": [1, 3, 5, 9], "unfriendly": [2, 4, 6, 7, 8]},
+        4: {"friendly": [2, 4, 6, 8], "unfriendly": [1, 3, 5, 7, 9]},
+        5: {"friendly": [1, 3, 5, 9], "unfriendly": [2, 4, 6, 7, 8]},
+        6: {"friendly": [2, 4, 6, 8], "unfriendly": [1, 3, 5, 7, 9]},
+        7: {"friendly": [1, 3, 5, 7, 9], "unfriendly": [2, 4, 6, 8]},
+        8: {"friendly": [2, 4, 6, 8], "unfriendly": [1, 3, 5, 7, 9]},
+        9: {"friendly": [1, 3, 5, 9], "unfriendly": [2, 4, 6, 7, 8]}
+    }
+    
+    return {
+        "based_on_psychic": psychic_number,
+        "friendly": relationships[psychic_number]["friendly"],
+        "unfriendly": relationships[psychic_number]["unfriendly"]
+    }
+
+def calculate_simplified_mahadasha(destiny_number):
+    """Calculate a simplified Mahadasha sequence starting from the Destiny Number."""
+    # Define the sequence order and duration (in years)
+    sequence_order = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    duration_years = {
+        1: 6,  # Sun
+        2: 15, # Moon
+        3: 16, # Jupiter
+        4: 18, # Rahu
+        5: 17, # Mercury
+        6: 20, # Venus
+        7: 7,  # Ketu
+        8: 19, # Saturn
+        9: 21  # Mars
+    }
+    
+    # Start from the destiny number and create the sequence
+    start_idx = sequence_order.index(destiny_number)
+    ordered_sequence = sequence_order[start_idx:] + sequence_order[:start_idx]
+    
+    # Create the Mahadasha sequence with planet names and durations
+    mahadasha_sequence = []
+    for num in ordered_sequence:
+        mahadasha_sequence.append({
+            "number": num,
+            "planet": get_planetary_ruler(num),
+            "duration": duration_years[num]
+        })
+    
+    return mahadasha_sequence
+
+def identify_yogas(day, month, year, psychic_number, destiny_number, lusho_grid):
+    """Identify Yogas (special combinations) in the numerological profile."""
+    yogas = []
+    
+    # Check for Raj Yoga (when Psychic and Destiny numbers are both powerful numbers)
+    powerful_numbers = [1, 3, 5, 6, 9]
+    if psychic_number in powerful_numbers and destiny_number in powerful_numbers:
+        yogas.append({
+            "name": "Raj Yoga",
+            "description": "Indicates leadership qualities, success, and authority in life."
+        })
+    
+    # Check for Dhana Yoga (wealth yoga)
+    wealth_combinations = [(5, 6), (6, 5), (2, 6), (6, 2), (3, 8), (8, 3)]
+    if (psychic_number, destiny_number) in wealth_combinations:
+        yogas.append({
+            "name": "Dhana Yoga",
+            "description": "Indicates potential for wealth accumulation and financial prosperity."
+        })
+    
+    # Check for Gajkesari Yoga
+    if 2 in lusho_grid["present_numbers"] and 3 in lusho_grid["present_numbers"]:
+        yogas.append({
+            "name": "Gajkesari Yoga",
+            "description": "Indicates good fortune, success in endeavors, and protection from enemies."
+        })
+    
+    # Check for Vipreet Raj Yoga (transformation of challenges into success)
+    challenging_numbers = [4, 7, 8]
+    if psychic_number in challenging_numbers and destiny_number in powerful_numbers:
+        yogas.append({
+            "name": "Vipreet Raj Yoga",
+            "description": "Indicates ability to transform challenges into opportunities for success."
+        })
+    
+    # Check for Panch Mahapurusha Yoga
+    if 1 in lusho_grid["present_numbers"] and 5 in lusho_grid["present_numbers"] and 9 in lusho_grid["present_numbers"]:
+        yogas.append({
+            "name": "Panch Mahapurusha Yoga",
+            "description": "Indicates exceptional qualities, fame, and accomplishments in life."
+        })
+    
+    return yogas
+
+@app.route('/api/calculate_numerology', methods=['POST', 'OPTIONS'])
+def calculate_numerology():
+    """API endpoint to calculate numerology based on date of birth."""
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'success'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+        
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        
+        # Validate required fields
+        if not all(key in data for key in ['day', 'month', 'year']):
+            return jsonify({
+                'error': 'Invalid input',
+                'message': 'Day, month, and year are required.'
+            }), 400
+        
+        # Parse input values
+        try:
+            day = int(data['day'])
+            month = int(data['month'])
+            year = int(data['year'])
+        except (ValueError, TypeError):
+            return jsonify({
+                'error': 'Invalid input',
+                'message': 'Day, month, and year must be valid integers.'
+            }), 400
+        
+        # Validate date ranges (basic validation)
+        if not (1 <= day <= 31 and 1 <= month <= 12 and 1900 <= year <= 2100):
+            return jsonify({
+                'error': 'Invalid date',
+                'message': 'Please provide a valid date within reasonable range.'
+            }), 400
+        
+        # Format the input date for display
+        input_dob = f"{day}/{month}/{year}"
+        
+        # Calculate Psychic Number (Personality Number)
+        psychic_number = calculate_psychic_number(day)
+        
+        # Calculate Destiny Number (Life Path Number)
+        destiny_number = calculate_destiny_number(day, month, year)
+        
+        # Populate Lusho Grid
+        lusho_grid = populate_lusho_grid(day, month, year)
+        
+        # Get friendly and unfriendly numbers
+        friendly_unfriendly = get_friendly_unfriendly_numbers(psychic_number)
+        
+        # Calculate simplified Mahadasha sequence
+        mahadasha_sequence = calculate_simplified_mahadasha(destiny_number)
+        
+        # Identify Yogas
+        yogas = identify_yogas(day, month, year, psychic_number, destiny_number, lusho_grid)
+        
+        # Compile the complete numerology analysis
+        result = {
+            "input_dob": input_dob,
+            "psychic_number": {
+                "number": psychic_number,
+                "planet": get_planetary_ruler(psychic_number)
+            },
+            "destiny_number": {
+                "number": destiny_number,
+                "planet": get_planetary_ruler(destiny_number)
+            },
+            "lusho_grid": lusho_grid,
+            "friendly_unfriendly": friendly_unfriendly,
+            "simplified_mahadasha_sequence": mahadasha_sequence,
+            "yogas_found": yogas,
+            "planetary_associations": PLANETARY_ASSOCIATIONS
+        }
+        
+        # Return the result with explicit CORS headers
+        response = jsonify(result)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 200
+        
+    except Exception as e:
+        # Log the error (in a production environment)
+        print(f"Error: {str(e)}")
+        
+        # Return a generic error message
+        return jsonify({
+            'error': 'Calculation error',
+            'message': 'An unexpected error occurred during numerology calculation.'
+        }), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
