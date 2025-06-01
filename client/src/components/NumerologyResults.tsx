@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { generateAIAnalysis } from "@/lib/numerology";
 import type { NumerologyAnalysis } from "@/lib/numerology";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import EnhancedFeatures from "@/components/EnhancedFeatures";
 import {
   User,
   Compass,
@@ -440,6 +441,9 @@ export default function NumerologyResults({ analysis, onReset }: NumerologyResul
           </div>
         </CardContent>
       </Card>
+
+      {/* Enhanced Features */}
+      <EnhancedFeatures analysis={analysis} />
 
       {/* Export Section */}
       <Card className="bg-white shadow-lg border border-gray-100">

@@ -5,9 +5,11 @@ import type { NumerologyAnalysis, DateOfBirth } from "@/lib/numerology";
 import NumerologyForm from "@/components/NumerologyForm";
 import NumerologyResults from "@/components/NumerologyResults";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { Loader2, Star } from "lucide-react";
 
-export default function Home() {
+export default function Calculator() {
   const [analysis, setAnalysis] = useState<NumerologyAnalysis | null>(null);
   const { toast } = useToast();
 
@@ -45,17 +47,28 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
       {/* Header */}
-      <header className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 text-white py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-6">
-            <div className="text-6xl mb-4 opacity-90">🌟</div>
+      <header className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 text-white py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <Link href="/" className="flex items-center space-x-3 text-white hover:text-purple-200 transition-colors">
+              <Star className="w-8 h-8" />
+              <div>
+                <div className="text-xl font-bold">Sameeksha Sharma</div>
+                <div className="text-sm opacity-90">Master Numerologist</div>
+              </div>
+            </Link>
+            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600">
+              Book Consultation
+            </Button>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-            Vedic Numerology Calculator
-          </h1>
-          <p className="text-xl md:text-2xl font-light opacity-90 max-w-2xl mx-auto">
-            Discover your numerological profile based on your date of birth
-          </p>
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+              Free Numerology Calculator
+            </h1>
+            <p className="text-xl opacity-90 max-w-2xl mx-auto">
+              Get instant insights into your personality, relationships, career, and life path
+            </p>
+          </div>
         </div>
       </header>
 
